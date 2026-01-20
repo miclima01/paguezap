@@ -27,9 +27,8 @@ export async function upsertProduct(data: ProductFormData) {
     const payload = {
         ...parsed,
         user_id: user?.id,
-        created_at: undefined, // Let DB handle default
-        // If updating, we might want to keep original created_at but Supabase upsert handles this if we don't pass it? 
-        // Usually we pass ID.
+        created_at: undefined,
+        updated_at: new Date().toISOString(),
     }
 
     const { error } = await supabase
