@@ -104,7 +104,11 @@ export function ProductDialog({ productToEdit, open, setOpen }: {
                                                     type="number"
                                                     step="0.01"
                                                     placeholder="0.00"
-                                                    {...field}
+                                                    name={field.name}
+                                                    ref={field.ref}
+                                                    onBlur={field.onBlur}
+                                                    disabled={field.disabled}
+                                                    value={field.value as number}
                                                     onChange={e => field.onChange(parseFloat(e.target.value))}
                                                 />
                                             </FormControl>

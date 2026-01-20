@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/popover"
 
 export function ChargeClientPage({ clients, products }: { clients: any[], products: any[] }) {
-    const form = useForm<ChargeFormData>({
+    const form = useForm({
         resolver: zodResolver(chargeSchema),
         defaultValues: {
             template_type: 'simple',
@@ -174,6 +174,7 @@ export function ChargeClientPage({ clients, products }: { clients: any[], produc
                                                         type="number"
                                                         step="0.01"
                                                         {...field}
+                                                        value={field.value as number}
                                                         onChange={e => field.onChange(parseFloat(e.target.value))}
                                                     />
                                                 </FormControl>
@@ -310,7 +311,7 @@ export function ChargeClientPage({ clients, products }: { clients: any[], produc
 
             {/* Right Column - Preview (40% -> col-span-2) */}
             <div className="lg:col-span-2 flex justify-center lg:justify-start lg:sticky lg:top-8 h-fit">
-                <WhatsAppPreview data={formData} clientName={selectedClient?.name} />
+                <WhatsAppPreview data={formData as ChargeFormData} clientName={selectedClient?.name} />
             </div>
         </div>
     )
