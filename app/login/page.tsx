@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { MessageCircle, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react'
 
 export default function LoginPage({
     searchParams,
@@ -16,94 +17,157 @@ export default function LoginPage({
 }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [isLogin, setIsLogin] = useState(true)
 
-    async function handleLogin(formData: FormData) {
+    async function handleSubmit(formData: FormData) {
         setLoading(true)
         try {
-            const result = await login(formData)
-            if (result?.error) {
-                toast.error(result.error)
+            if (isLogin) {
+                const result = await login(formData)
+                if (result?.error) {
+                    toast.error(result.error)
+                }
             } else {
-                // Redirect happens in server action purely if successful?
-                // Wait, if redirect() in action, it acts as navigation.
-                // But if we want custom handling, we might need a generic return.
-                // My action logic: success -> redirect. error -> return object.
-                // So if we reach here, and result is undefined, it meant redirect happened?
-                // Actually, if redirect() throws, this catch block might catch it?
-                // No, Next.js handles redirects specially.
+                const result = await signup(formData)
+                if (result?.error) {
+                    toast.error(result.error)
+                } else if (result?.success) {
+                    toast.success(result.message)
+                    setIsLogin(true) // Switch back to login after signup
+                }
             }
         } catch (e) {
-            // Ignored, likely redirect
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    async function handleSignup(formData: FormData) {
-        setLoading(true)
-        try {
-            const result = await signup(formData)
-            if (result?.error) {
-                toast.error(result.error)
-            } else if (result?.success) {
-                toast.success(result.message)
-                // Optional: clear form
-            }
-        } catch (e) {
-            // Ignored
+            toast.error("Ocorreu um erro inesperado. Tente novamente.")
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold tracking-tight text-center">
-                        Pague Zap
-                    </CardTitle>
-                    <CardDescription className="text-center">
-                        Entre com seu email para acessar o dashboard
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="seu@email.com"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Senha</Label>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                            />
-                        </div>
-                        {searchParams?.error && (
-                            <div className="text-red-500 text-sm font-medium">
-                                {searchParams.error}
+        <div className="relative min-h-screen bg-[#F0F2F5] dark:bg-[var(--background)] flex flex-col items-center justify-center overflow-hidden">
+            {/* Top Teal Strip (WhatsApp Style) */}
+            <div className="absolute top-0 w-full h-[220px] bg-primary z-0 hidden md:block">
+                <div className="container mx-auto px-4 h-full flex items-center mb-8">
+                    <div className="flex items-center gap-2 text-white/90">
+                        <MessageCircle className="w-8 h-8" />
+                        <span className="text-xl font-medium tracking-wide">PAGUE ZAP WEB</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content Card */}
+            <div className="z-10 w-full max-w-[1000px] h-auto md:h-[70vh] md:min-h-[550px] flex rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+
+                {/* Left Side (Features / Branding) - Hidden on Mobile */}
+                <div className="hidden md:flex flex-1 flex-col justify-center p-12 bg-white dark:bg-sidebar text-slate-800 dark:text-gray-200 border-r dark:border-gray-800">
+                    <h1 className="text-4xl font-light mb-6 text-slate-700 dark:text-gray-100">
+                        Gerencie suas cobranças <br />
+                        <span className="font-semibold text-primary">diretamente no Zap.</span>
+                    </h1>
+                    <div className="space-y-6 mt-4">
+                        <div className="flex items-start gap-4">
+                            <div className="p-2 rounded-full bg-primary/10 text-primary">
+                                <MessageCircle className="w-6 h-6" />
                             </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button formAction={handleLogin} className="w-full" disabled={loading}>
-                                {loading ? '...' : 'Entrar'}
-                            </Button>
-                            <Button formAction={handleSignup} variant="outline" className="w-full" disabled={loading}>
-                                {loading ? '...' : 'Cadastrar'}
-                            </Button>
+                            <div>
+                                <h3 className="font-semibold text-lg">Automação Completa</h3>
+                                <p className="text-muted-foreground">Envie cobranças automáticas e lembretes sem esforço.</p>
+                            </div>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
+                        <div className="flex items-start gap-4">
+                            <div className="p-2 rounded-full bg-primary/10 text-primary">
+                                <Lock className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Segurança Total</h3>
+                                <p className="text-muted-foreground">Seus dados e de seus clientes protegidos com criptografia.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Side (Login Form) */}
+                <div className="flex-1 bg-white dark:bg-sidebar p-8 md:p-12 flex flex-col justify-center relative">
+                    <div className="max-w-sm mx-auto w-full space-y-8">
+                        <div className="text-center md:text-left space-y-2">
+                            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                {isLogin ? 'Acesse sua conta' : 'Crie sua conta grátis'}
+                            </h2>
+                            <p className="text-muted-foreground">
+                                {isLogin
+                                    ? 'Bem-vindo de volta! Digite seus dados abaixo.'
+                                    : 'Comece a otimizar seu tempo hoje mesmo.'}
+                            </p>
+                        </div>
+
+                        <form action={handleSubmit} className="space-y-5">
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-slate-600 dark:text-gray-300">Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="seu@email.com"
+                                        required
+                                        className="pl-10 h-11 bg-slate-50 dark:bg-gray-800/50 border-slate-200 dark:border-gray-700 focus-visible:ring-primary focus-visible:border-primary transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password" className="text-slate-600 dark:text-gray-300">Senha</Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        required
+                                        className="pl-10 h-11 bg-slate-50 dark:bg-gray-800/50 border-slate-200 dark:border-gray-700 focus-visible:ring-primary focus-visible:border-primary transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {searchParams?.error && (
+                                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium dark:bg-red-900/20 dark:text-red-400">
+                                    {searchParams.error}
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
+                                disabled={loading}
+                            >
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isLogin ? 'Entrar no Sistema' : 'Começar Agora'}
+                                {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+                            </Button>
+                        </form>
+
+                        <div className="text-center pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+                            >
+                                {isLogin
+                                    ? 'Ainda não tem uma conta? Cadastre-se'
+                                    : 'Já possui uma conta? Faça login'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Decorative Bottom Pattern (Optional) */}
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+                </div>
+            </div>
+
+            <div className="mt-8 text-sm text-muted-foreground/60 hidden md:block">
+                &copy; 2024 Pague Zap. Todos os direitos reservados.
+            </div>
         </div>
     )
 }
